@@ -1,0 +1,90 @@
+body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background-image: url('wavy1.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+        .monitor {
+            width: 350px;
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .liquid-bar-container {
+            width: 65px;
+            height: 350px;
+            background-color: #ffffff;
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+         .liquid-fill {
+             background: linear-gradient(to top, #1e90ff, #87cefa); /* Intense blue at the bottom, lighter blue at the top */
+            width: 100%;
+            position: absolute;
+            bottom: 0;
+            transition: height 0.5s ease-in-out;
+        }
+        .bg-light {
+            background-color: #eef2f7 !important;
+        }
+        .text-start {
+            font-size: 16px;
+            color: #777;
+            text-align: center !important;
+        }
+        .title {
+            font-size: 30px;
+            font-weight: bold;
+        }
+        .fs-5 {
+            font-size: 0.8rem !important;
+            margin-bottom: 0;
+            margin-top: 15px;
+        }
+        .fs-4 {
+            font-size: 1.8rem !important;
+            margin-bottom: 35px;
+            color: black;
+            font-weight: normal !important;
+        }
+        .rounded-3 {
+            border-radius: 1rem !important;
+        }
+        .fill-percentage {
+            position: absolute;
+            left: 125px;
+            color: black;
+            font-size: 15px;
+            font-weight: bold;
+        }
+        .chart-section {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .chart-tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+        .tab {
+            padding: 5px 10px;
+            margin: 0 5px;
+            border: none;
+            background-color: #e0e0e0;
+            color: #333;
+            cursor: pointer;
+        }
+        .tab.active {
+            background-color: #4e91f9;
+            color: white;
+        }
+        canvas {
+            width: 100%;
+            height: 150px;
+            background-color: #f0f4fa;
+            border-radius: 10px;
+        }
+        

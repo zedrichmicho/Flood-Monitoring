@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en"> 
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Water Level Monitor</title>
+    <!-- Bootstrap CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- Firebase Realtime Database -->
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
+</head>
+<body>
+    <div class="container-fluid d-flex justify-content-center align-items-center min-vh-100">
+        <div class="monitor rounded-3 ">
+            <h2 class="title text-center mb-4">Tantangan Flood Monitoring</h2>
+            <div class="row">
+                <div class="col-6 text-start">
+                    <p class="fs-5">Water Level Ratio</p>
+                    <p class="fs-4 fw-bold" id="waterLevelDisplay">0%</p>
+                    <p class="fs-5">Water Level Depth</p>
+                    <p class="fs-4 fw-bold" id="waterDepthDisplay"></p>
+                    <p class="fs-5">Water Level Status</p>
+                    <p class="fs-4 fw-bold" id="waterLevelStatus">Normal</p>
+                    <p class="fs-5">Supply Voltage</p>
+                    <p style="margin-bottom: 15px;" class="fs-4 fw-bold">5.0V</p>
+                </div>
+                <div class="col-6 d-flex justify-content-center align-items-center position-relative">
+                    <div class="liquid-bar-container position-relative">
+                        <div class="liquid-fill" id="liquidFill"></div>
+                    </div>
+                    <span class="fill-percentage" id="fillPercent" style="margin-top: 10px;">0%</span>
+                </div>
+            </div>
+
+            <!-- Chart Section -->
+            <div class="chart-section">
+                <h3>Water Level Depth</h3>
+            <p id="currentDateTime" class="fs-5"></p>
+            <canvas id="depthChart" height="280"></canvas>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+          apiKey: "AIzaSyDsc9XPD13Pz58KvIDwWYFiBFQyVKGcbDg",
+          authDomain: "tantangan-flood-monitoring.firebaseapp.com",
+          databaseURL: "https://tantangan-flood-monitoring-default-rtdb.asia-southeast1.firebasedatabase.app",
+          projectId: "tantangan-flood-monitoring",
+          storageBucket: "tantangan-flood-monitoring.firebasestorage.app",
+          messagingSenderId: "167091016720",
+          appId: "1:167091016720:web:ee29834df4a23087cb6695",
+          measurementId: "G-QDD15SGHX2"
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        document.addEventListener("DOMContentLoaded", function () {
+        const waterDepthDisplay = document.getElementById('waterDepthDisplay');
+        const waterLevelDisplay = document.getElementById('waterLevelDisplay');
+        const waterLevelStatus = document.getElementById('waterLevelStatus');
+        const fillPercent = document.getElementById('fillPercent');
+        const liquidFill = document.getElementById('liquidFill');
+
+        const waterDepthRef = database.ref('waterDPT');
+
+        // Fetch and display water depth and calculate percentage from Firebase
+        waterDepthRef.on('value', (snapshot) => {
+            const waterDepth = snapshot.val() || 0;
+            waterDepthDisplay.innerText = `${waterDepth} ft.`;
+
+            const waterLevelPercentage = Math.min((waterDepth / 8.0) * 100, 100);
+            waterLevelDisplay.innerText = `${waterLevelPercentage.toFixed(1)}%`;
+            fillPercent.innerText = `${waterLevelPercentage.toFixed(1)}%`;
+            liquidFill.style.height = `${waterLevelPercentage}%`;
+
+            // Adjust the fillPercent position to follow the liquid fill height
+            fillPercent.style.top = `${350 - (350 * (waterLevelPercentage / 100)) - 0}px`; // 20px offset for visibility
+
+            let status = "Normal";
+            if (waterLevelPercentage >= 91 && waterLevelPercentage <= 100) {
+                status = "Critical";
+            } else if (waterLevelPercentage >= 71 && waterLevelPercentage <= 90) {
+                status = "High Flow";
+            } else if (waterLevelPercentage >= 21 && waterLevelPercentage <= 70) {
+                status = "Normal";
+            } else if (waterLevelPercentage >= 0 && waterLevelPercentage <= 20) {
+                status = "Low Flow";
+            }
+            waterLevelStatus.innerText = status;
+        });
+    });
+    </script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('depthChart').getContext('2d');
+    let chart;
+
+    const initializeChart = (data, labels) => {
+        if (chart) chart.destroy();
+        chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Real-Time Water Level',
+                    data: data,
+                    backgroundColor: 'rgba(78, 145, 249, 0.2)',
+                    borderColor: '#4e91f9',
+                    borderWidth: 2,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        display: true,
+                        title: { display: true, text: 'Time' }
+                    },
+                    y: {
+                        display: true,
+                        beginAtZero: true,
+                        min: 0,
+                        max: 8,
+                        ticks: { stepSize: 1, callback: (value) => value + ' ft.' },
+                        title: { display: true, text: 'Water Depth (ft.)' }
+                    }
+                }
+            }
+        });
+    };
+
+    const loadChartData = () => {
+        let labels = [];
+        let data = [];
+
+        database.ref('waterDPT').on('value', (snapshot) => {
+            const waterDepth = snapshot.val() || 0;
+            const currentTime = new Date().toLocaleTimeString().slice(0, 5);
+
+            if (labels.length >= 20) {
+                labels.shift();
+                data.shift();
+            }
+
+            labels.push(currentTime);
+            data.push(waterDepth);
+            initializeChart(data, labels);
+        });
+    };
+
+    loadChartData();
+});
+</script>
+<script>
+   function updateDateTime() {
+    const currentDateTimeElement = document.getElementById('currentDateTime');
+    
+    // Get current date and time in the Philippines
+    const now = new Date().toLocaleString("en-US", {
+        timeZone: "Asia/Manila",
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+    });
+
+    // Display the current date and time
+    currentDateTimeElement.innerText = now;
+}
+
+// Update date and time every second
+setInterval(updateDateTime, 1000);
+
+</script>
+
+</body>
+</html>
